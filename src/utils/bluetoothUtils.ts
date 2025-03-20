@@ -18,22 +18,10 @@ export const requestDevice = async (
   }
 
   try {
-    // Vérifie la disponibilité du Bluetooth si l'API le permet
-    if (navigator.bluetooth.getAvailability) {
-      const isAvailable = await navigator.bluetooth.getAvailability();
-      if (!isAvailable) {
-        throw new Error("Bluetooth n'est pas disponible sur cet appareil ou est désactivé");
-      }
-    }
-
     const device = await navigator.bluetooth.requestDevice({
       filters: [{ services: [config.serviceUUID] }],
       optionalServices: [config.serviceUUID]
     });
-    
-    if (!device) {
-      throw new Error("Aucun appareil compatible n'a été sélectionné");
-    }
     
     device.addEventListener('gattserverdisconnected', () => {
       console.log('Device disconnected');
@@ -42,8 +30,7 @@ export const requestDevice = async (
     return device;
   } catch (error) {
     console.error('Error requesting Bluetooth device:', error);
-    // Propagez l'erreur au lieu de retourner null pour permettre une meilleure gestion en amont
-    throw error;
+    return null;
   }
 };
 
@@ -58,19 +45,11 @@ export const connectToDevice = async (
 
   try {
     const server = await device.gatt.connect();
-    if (!server) {
-      throw new Error("Impossible de se connecter au serveur GATT");
-    }
-    
     const service = await server.getPrimaryService(config.serviceUUID);
-    if (!service) {
-      throw new Error(`Service ${config.serviceUUID} non trouvé sur l'appareil`);
-    }
-    
     return service;
   } catch (error) {
     console.error('Error connecting to device:', error);
-    throw error; // Propagez l'erreur pour une meilleure gestion
+    return null;
   }
 };
 

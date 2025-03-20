@@ -27,40 +27,15 @@ export function useDeviceConnection() {
     setIsConnecting(true);
     
     try {
-      // Si en mode développeur, utilisez directement le simulateur
-      if (settings.developerMode) {
-        const result = await activeDevice.connect();
-        setIsConnecting(false);
-        
-        if (result) {
-          toast({
-            title: "Connexion réussie",
-            description: "Mode simulation activé",
-          });
-        }
-        
-        return result;
-      }
-      
-      // Si pas en mode développeur, vérifiez d'abord le support Bluetooth
-      if (!activeDevice.isSupported) {
-        setIsConnecting(false);
-        toast({
-          title: "Bluetooth non supporté",
-          description: "Votre navigateur ne supporte pas le Web Bluetooth. Essayez Chrome, Edge ou Opera, ou activez le mode développeur dans les paramètres.",
-          variant: "destructive",
-        });
-        return false;
-      }
-      
-      // Tentative de connexion Bluetooth réelle
       const result = await activeDevice.connect();
       setIsConnecting(false);
       
       if (result) {
         toast({
           title: "Connexion réussie",
-          description: "Connecté à l'appareil ESP32",
+          description: settings.developerMode 
+            ? "Mode simulation activé" 
+            : "Connecté à l'appareil ESP32",
         });
       }
       
@@ -69,22 +44,9 @@ export function useDeviceConnection() {
       setIsConnecting(false);
       console.error("Erreur de connexion:", error);
       
-      // Message personnalisé en fonction de l'erreur
-      let errorMessage = `${error}`;
-      
-      if (error instanceof Error) {
-        if (error.name === "NotFoundError") {
-          errorMessage = "Aucun adaptateur Bluetooth trouvé ou aucun appareil ESP32 à proximité. Vérifiez que votre Bluetooth est activé.";
-        } else if (error.name === "SecurityError") {
-          errorMessage = "Permission Bluetooth refusée. Veuillez autoriser l'accès au Bluetooth.";
-        } else if (error.name === "NotSupportedError") {
-          errorMessage = "Le Bluetooth n'est pas pris en charge par ce navigateur. Essayez Chrome, Edge ou Opera.";
-        }
-      }
-      
       toast({
         title: "Erreur de connexion",
-        description: errorMessage,
+        description: `${error}`,
         variant: "destructive",
       });
       
