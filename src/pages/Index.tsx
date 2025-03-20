@@ -10,7 +10,7 @@ import DeviceConnection from "@/components/devices/DeviceConnection";
 import { useDeviceConnection } from "@/hooks/useDeviceConnection";
 import { ConnectionStatus } from "@/types/sensorTypes";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, RefreshCw } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -22,14 +22,25 @@ const Index = () => {
     sensorData, 
     isSupported,
     device,
-    isSimulated
+    isSimulated,
+    isConnecting
   } = useDeviceConnection();
 
   const isConnected = status === ConnectionStatus.CONNECTED;
 
-  // Navigate to connect page when not connected
-  const handleConnectClick = () => {
-    navigate("/connect");
+  const handleConnect = async () => {
+    // Si l'appareil n'est pas connecté, on tente de le connecter directement
+    if (status === ConnectionStatus.DISCONNECTED) {
+      const success = await connect();
+      
+      // Si la connexion échoue et que ce n'est pas le mode simulé, on va à la page de connexion
+      if (!success && !isSimulated) {
+        navigate("/connect");
+      }
+    } else if (status === ConnectionStatus.CONNECTED) {
+      // Si déjà connecté, on déconnecte
+      disconnect();
+    }
   };
 
   return (
@@ -50,20 +61,12 @@ const Index = () => {
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <DeviceConnection
                 status={status}
-                onConnect={connect}
+                onConnect={handleConnect}
                 onDisconnect={disconnect}
                 isSupported={isSupported}
                 deviceName={device?.name || null}
+                isConnecting={isConnecting}
               />
-              
-              {!isConnected && (
-                <Button 
-                  onClick={handleConnectClick}
-                  className="animate-fade-in"
-                >
-                  Connect Device <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              )}
             </div>
           </section>
 
@@ -89,16 +92,22 @@ const Index = () => {
             </section>
           ) : (
             <section className="glassmorphism rounded-2xl p-10 text-center animate-fade-in">
-              <h2 className="text-2xl font-light mb-4">No Device Connected</h2>
+              <h2 className="text-2xl font-light mb-4">Aucun appareil connecté</h2>
               <p className="text-muted-foreground mb-6">
-                Connect to your ESP32 device to start monitoring sensor data in real-time.
+                {isConnecting 
+                  ? "Tentative de connexion en cours..." 
+                  : "Connectez-vous à votre ESP32 pour commencer à surveiller les données en temps réel."}
               </p>
               <Button 
-                onClick={handleConnectClick}
+                onClick={handleConnect}
                 size="lg"
                 className="animate-fade-in hover-elevate"
+                disabled={isConnecting || !isSupported}
               >
-                Connect a Device
+                {isConnecting 
+                  ? <><RefreshCw className="h-4 w-4 animate-spin mr-2" /> Connexion...</>
+                  : "Se connecter à un appareil"
+                }
               </Button>
             </section>
           )}

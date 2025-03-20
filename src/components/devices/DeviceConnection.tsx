@@ -5,7 +5,8 @@ import {
   Bluetooth, 
   BluetoothConnected, 
   BluetoothOff, 
-  BluetoothSearching 
+  BluetoothSearching,
+  RefreshCw
 } from "lucide-react";
 import { ConnectionStatus } from "@/types/sensorTypes";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,7 @@ interface DeviceConnectionProps {
   isSupported: boolean;
   deviceName?: string | null;
   className?: string;
+  isConnecting?: boolean;
 }
 
 const DeviceConnection = ({
@@ -26,6 +28,7 @@ const DeviceConnection = ({
   isSupported,
   deviceName,
   className,
+  isConnecting = false,
 }: DeviceConnectionProps) => {
   // Helper to get status icon
   const getStatusIcon = () => {
@@ -45,13 +48,13 @@ const DeviceConnection = ({
   const getStatusLabel = () => {
     switch (status) {
       case ConnectionStatus.CONNECTED:
-        return "Connected";
+        return "Connecté";
       case ConnectionStatus.CONNECTING:
-        return "Connecting...";
+        return "Connexion...";
       case ConnectionStatus.ERROR:
-        return "Connection Error";
+        return "Erreur de connexion";
       default:
-        return "Disconnected";
+        return "Déconnecté";
     }
   };
 
@@ -87,11 +90,18 @@ const DeviceConnection = ({
         {status !== ConnectionStatus.CONNECTED && (
           <Button
             onClick={onConnect}
-            disabled={!isSupported || status === ConnectionStatus.CONNECTING}
+            disabled={!isSupported || isConnecting || status === ConnectionStatus.CONNECTING}
             className="animate-fade-in"
             size="sm"
           >
-            Connect
+            {isConnecting ? (
+              <>
+                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                Connexion...
+              </>
+            ) : (
+              "Connecter"
+            )}
           </Button>
         )}
 
@@ -102,13 +112,13 @@ const DeviceConnection = ({
             className="animate-fade-in"
             size="sm"
           >
-            Disconnect
+            Déconnecter
           </Button>
         )}
 
         {!isSupported && (
           <p className="text-xs text-sensor-error animate-fade-in">
-            Web Bluetooth is not supported in this browser.
+            Le Web Bluetooth n'est pas supporté par ce navigateur.
           </p>
         )}
       </div>
