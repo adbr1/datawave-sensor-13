@@ -2,6 +2,7 @@
 import { Thermometer } from "lucide-react";
 import SensorCard from "./SensorCard";
 import { cn } from "@/lib/utils";
+import { useSettings } from "@/contexts/SettingsContext";
 
 interface TemperatureDisplayProps {
   temperature: number;
@@ -14,7 +15,14 @@ const TemperatureDisplay = ({
   className,
   animationDelay = 'animation-delay-100'
 }: TemperatureDisplayProps) => {
-  // Determine color based on temperature range
+  const { settings } = useSettings();
+  
+  // Convertir la température si nécessaire
+  const displayTemp = settings.temperatureUnit === "fahrenheit" 
+    ? (temperature * 9/5) + 32
+    : temperature;
+  
+  // Determine color based on temperature range (en Celsius, indépendamment de l'affichage)
   const getTemperatureColor = (temp: number): string => {
     if (temp < 5) return "text-blue-500";
     if (temp > 30) return "text-red-500";
@@ -32,7 +40,7 @@ const TemperatureDisplay = ({
     >
       <div className="flex flex-col items-center justify-center">
         <span className={cn("text-4xl font-light transition-colors duration-300", tempColor)}>
-          {temperature}°C
+          {displayTemp.toFixed(1)}°{settings.temperatureUnit === "fahrenheit" ? "F" : "C"}
         </span>
         <span className="text-xs text-muted-foreground mt-1">
           {temperature < 5 

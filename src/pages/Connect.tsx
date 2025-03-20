@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import DeviceConnection from "@/components/devices/DeviceConnection";
-import { useBluetoothDevice } from "@/hooks/useBluetoothDevice";
+import { useDeviceConnection } from "@/hooks/useDeviceConnection";
 import { ConnectionStatus } from "@/types/sensorTypes";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BluetoothSearching, Check, HelpCircle, Info } from "lucide-react";
@@ -19,8 +19,9 @@ const Connect = () => {
     disconnect, 
     status, 
     isSupported,
-    device 
-  } = useBluetoothDevice();
+    device,
+    isSimulated
+  } = useDeviceConnection();
 
   const handleConnectClick = async () => {
     setIsConnecting(true);
@@ -51,6 +52,7 @@ const Connect = () => {
             <CardTitle className="text-2xl font-light">Connect to ESP32 Device</CardTitle>
             <CardDescription>
               Connect to your ESP32 sensor via Bluetooth to start monitoring data
+              {isSimulated && <span className="text-sensor-info ml-2">(Simulation Mode Enabled)</span>}
             </CardDescription>
           </CardHeader>
           

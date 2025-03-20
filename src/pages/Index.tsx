@@ -7,7 +7,7 @@ import TurbidityDisplay from "@/components/sensors/TurbidityDisplay";
 import LampStatus from "@/components/sensors/LampStatus";
 import TimeDisplay from "@/components/sensors/TimeDisplay";
 import DeviceConnection from "@/components/devices/DeviceConnection";
-import { useBluetoothDevice } from "@/hooks/useBluetoothDevice";
+import { useDeviceConnection } from "@/hooks/useDeviceConnection";
 import { ConnectionStatus } from "@/types/sensorTypes";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
@@ -21,8 +21,9 @@ const Index = () => {
     status, 
     sensorData, 
     isSupported,
-    device
-  } = useBluetoothDevice();
+    device,
+    isSimulated
+  } = useDeviceConnection();
 
   const isConnected = status === ConnectionStatus.CONNECTED;
 
@@ -41,6 +42,7 @@ const Index = () => {
             </h1>
             <p className="text-muted-foreground mb-6">
               Real-time monitoring of your ESP32 water sensor data
+              {isSimulated && <span className="text-sensor-info ml-2">(Simulation Mode)</span>}
             </p>
           </section>
 
