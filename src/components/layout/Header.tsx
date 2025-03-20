@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Settings } from "lucide-react";
 
 interface HeaderProps {
   title: string;
@@ -50,6 +51,13 @@ const Header = ({ title, className }: HeaderProps) => {
             className="text-sm font-medium hover:text-primary transition-colors"
           >
             Connect
+          </Link>
+          <Link 
+            to="/settings" 
+            className="text-sm font-medium hover:text-primary transition-colors flex items-center"
+          >
+            <Settings className="h-4 w-4 mr-1" />
+            Paramètres
           </Link>
         </nav>
       </div>
