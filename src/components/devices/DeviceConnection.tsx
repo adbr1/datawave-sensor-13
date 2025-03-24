@@ -2,10 +2,8 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Bluetooth, 
-  BluetoothConnected, 
-  BluetoothOff, 
-  BluetoothSearching,
+  Wifi,
+  WifiOff,
   RefreshCw
 } from "lucide-react";
 import { ConnectionStatus } from "@/types/sensorTypes";
@@ -34,13 +32,13 @@ const DeviceConnection = ({
   const getStatusIcon = () => {
     switch (status) {
       case ConnectionStatus.CONNECTED:
-        return <BluetoothConnected className="h-5 w-5 text-sensor-success" />;
+        return <Wifi className="h-5 w-5 text-sensor-success" />;
       case ConnectionStatus.CONNECTING:
-        return <BluetoothSearching className="h-5 w-5 text-sensor-info animate-pulse" />;
+        return <Wifi className="h-5 w-5 text-sensor-info animate-pulse" />;
       case ConnectionStatus.ERROR:
-        return <BluetoothOff className="h-5 w-5 text-sensor-error" />;
+        return <WifiOff className="h-5 w-5 text-sensor-error" />;
       default:
-        return <Bluetooth className="h-5 w-5" />;
+        return <WifiOff className="h-5 w-5" />;
     }
   };
 
@@ -118,7 +116,7 @@ const DeviceConnection = ({
 
         {!isSupported && (
           <p className="text-xs text-sensor-error animate-fade-in">
-            Le Web Bluetooth n'est pas supporté par ce navigateur.
+            Les WebSockets ne sont pas supportés par ce navigateur.
           </p>
         )}
       </div>

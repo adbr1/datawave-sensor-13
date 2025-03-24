@@ -11,13 +11,13 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import MainLayout from "@/components/layout/MainLayout";
-import { Bug, RefreshCw, BellRing, Moon, Globe, Bell, Gauge, SunMoon } from "lucide-react";
+import { Bug, RefreshCw, BellRing, Globe, Bell, Gauge } from "lucide-react";
 import { toast } from "sonner";
 import SensorSettings from "@/components/settings/SensorSettings";
 import { Button } from "@/components/ui/button";
 
 const Settings = () => {
-  const { settings, updateSettings, resetSettings, toggleDarkMode } = useSettings();
+  const { settings, updateSettings, resetSettings } = useSettings();
   const [confirmReset, setConfirmReset] = useState(false);
 
   const handleReset = () => {
@@ -36,22 +36,11 @@ const Settings = () => {
   return (
     <MainLayout title="Paramètres" className="max-w-4xl">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Paramètres</h1>
-            <p className="text-muted-foreground">
-              Configurez l'application selon vos préférences
-            </p>
-          </div>
-          
-          <Button 
-            variant={settings.darkMode ? "outline" : "default"}
-            size="icon"
-            onClick={toggleDarkMode}
-            className="rounded-full h-10 w-10"
-          >
-            <SunMoon className="h-5 w-5" />
-          </Button>
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Paramètres</h1>
+          <p className="text-muted-foreground">
+            Configurez l'application selon vos préférences
+          </p>
         </div>
 
         <Tabs defaultValue="general">
@@ -137,21 +126,6 @@ const Settings = () => {
             <div className="rounded-lg border p-4 space-y-4">
               <h2 className="text-xl font-medium">Préférences d'affichage</h2>
               
-              <div className="flex items-center space-x-2">
-                <Moon className="h-5 w-5 text-muted-foreground" />
-                <div className="flex-1">
-                  <Label htmlFor="darkmode">Mode sombre</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Activer le thème sombre pour l'interface
-                  </p>
-                </div>
-                <Switch 
-                  id="darkmode"
-                  checked={settings.darkMode}
-                  onCheckedChange={(checked) => updateSettings({ darkMode: checked })}
-                />
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="temperature-unit">Unité de température</Label>
                 <select 

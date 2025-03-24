@@ -35,7 +35,7 @@ export function useDeviceConnection() {
       if (result) {
         toast.success(settings.developerMode 
           ? "Mode simulation activé" 
-          : "Connecté à l'appareil ESP32");
+          : "Connecté au serveur WebSocket");
       }
       
       return result;

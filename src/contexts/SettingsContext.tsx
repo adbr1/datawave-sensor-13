@@ -7,7 +7,6 @@ interface SettingsContextType {
   settings: AppSettings;
   updateSettings: (newSettings: Partial<AppSettings>) => void;
   resetSettings: () => void;
-  toggleDarkMode: () => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -28,15 +27,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       console.error("Erreur lors du chargement des paramètres:", error);
     }
   }, []);
-
-  // Effet pour appliquer le mode sombre
-  useEffect(() => {
-    if (settings.darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [settings.darkMode]);
 
   // Met à jour les paramètres
   const updateSettings = (newSettings: Partial<AppSettings>) => {
@@ -66,13 +56,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     toast.success("Paramètres réinitialisés");
   };
 
-  // Fonction spécifique pour basculer le mode sombre
-  const toggleDarkMode = () => {
-    updateSettings({ darkMode: !settings.darkMode });
-  };
-
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings, resetSettings, toggleDarkMode }}>
+    <SettingsContext.Provider value={{ settings, updateSettings, resetSettings }}>
       {children}
     </SettingsContext.Provider>
   );
