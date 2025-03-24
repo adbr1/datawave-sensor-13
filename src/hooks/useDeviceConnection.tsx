@@ -20,7 +20,7 @@ export function useDeviceConnection() {
   }, [settings.developerMode, simulatedDevice, webSocketDevice]);
   
   // Connect à l'appareil approprié avec gestion des états de connexion
-  const connect = useCallback(async () => {
+  const connect = useCallback(async (ipAddress?: string, port?: string) => {
     // Empêche les tentatives de connexion multiples
     if (isConnecting || activeDevice.status === ConnectionStatus.CONNECTED) {
       return false;
@@ -29,7 +29,10 @@ export function useDeviceConnection() {
     setIsConnecting(true);
     
     try {
-      const result = await activeDevice.connect();
+      const result = settings.developerMode 
+        ? await activeDevice.connect()
+        : await webSocketDevice.connect(ipAddress, port);
+      
       setIsConnecting(false);
       
       if (result) {
@@ -47,7 +50,7 @@ export function useDeviceConnection() {
       
       return false;
     }
-  }, [activeDevice, isConnecting, settings.developerMode]);
+  }, [activeDevice, isConnecting, settings.developerMode, webSocketDevice]);
   
   // Déconnecte l'appareil actif
   const disconnect = useCallback(() => {
@@ -200,6 +203,7 @@ export function useDeviceConnection() {
     isSupported: activeDevice.isSupported,
     isSimulated: settings.developerMode,
     device: activeDevice.device,
-    isConnecting
+    isConnecting,
+    serverAddress: 'serverAddress' in activeDevice ? activeDevice.serverAddress : null
   };
 }
