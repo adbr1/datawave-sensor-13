@@ -12,7 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
-import { Bell, Thermometer, Waves, Lightbulb } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Bell, Thermometer, Waves, Lightbulb, Clock } from "lucide-react";
 
 export const SensorSettings = () => {
   const { settings, updateSettings } = useSettings();
@@ -84,6 +85,36 @@ export const SensorSettings = () => {
     });
   };
   
+  // Gestionnaire pour le basculement entre modes d'automatisation
+  const handleScheduleModeToggle = (checked: boolean) => {
+    updateSettings({
+      lampAutomation: {
+        ...settings.lampAutomation,
+        scheduleMode: checked
+      }
+    });
+  };
+  
+  // Gestionnaires pour les horaires
+  const handleScheduleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateSettings({
+      lampAutomation: {
+        ...settings.lampAutomation,
+        scheduleOn: e.target.value
+      }
+    });
+  };
+  
+  const handleScheduleOffChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateSettings({
+      lampAutomation: {
+        ...settings.lampAutomation,
+        scheduleOff: e.target.value
+      }
+    });
+  };
+  
+  // Anciens gestionnaires pour l'automatisation par capteurs
   const handleTempTriggerToggle = (checked: boolean) => {
     updateSettings({
       lampAutomation: {
@@ -226,75 +257,122 @@ export const SensorSettings = () => {
             />
           </div>
           <CardDescription>
-            Configurez l'activation automatique de la lampe en fonction des conditions
+            Configurez l'activation automatique de la lampe
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Déclencheur par température */}
+          {/* Mode d'automatisation */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div>
-                <Label>Activer par température</Label>
-                <p className="text-xs text-muted-foreground">La lampe s'allume quand la température dépasse le seuil</p>
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-blue-500" />
+                <Label>Mode programmation horaire</Label>
               </div>
               <Switch 
-                checked={settings.lampAutomation.temperatureTriggered}
-                onCheckedChange={handleTempTriggerToggle}
+                checked={settings.lampAutomation.scheduleMode}
+                onCheckedChange={handleScheduleModeToggle}
                 disabled={!settings.lampAutomation.enabled}
               />
             </div>
             
-            {settings.lampAutomation.temperatureTriggered && (
-              <div className="space-y-2 pl-2 border-l-2 border-muted ml-2">
-                <div className="flex justify-between items-center">
-                  <Label>Seuil de température</Label>
-                  <span className="text-muted-foreground">{autoTempThreshold}°C</span>
+            {/* Configuration horaire */}
+            {settings.lampAutomation.scheduleMode && settings.lampAutomation.enabled && (
+              <div className="space-y-4 pl-2 border-l-2 border-muted ml-2">
+                <div className="space-y-2">
+                  <Label htmlFor="schedule-on">Heure d'allumage</Label>
+                  <Input 
+                    id="schedule-on"
+                    type="time" 
+                    value={settings.lampAutomation.scheduleOn}
+                    onChange={handleScheduleOnChange}
+                  />
                 </div>
-                <Slider 
-                  defaultValue={[autoTempThreshold]} 
-                  min={15} 
-                  max={40} 
-                  step={0.5} 
-                  onValueChange={handleTempTriggerChange}
-                  disabled={!settings.lampAutomation.enabled || !settings.lampAutomation.temperatureTriggered}
-                />
+                
+                <div className="space-y-2">
+                  <Label htmlFor="schedule-off">Heure d'extinction</Label>
+                  <Input 
+                    id="schedule-off"
+                    type="time" 
+                    value={settings.lampAutomation.scheduleOff}
+                    onChange={handleScheduleOffChange}
+                  />
+                </div>
               </div>
             )}
           </div>
           
           <Separator />
           
-          {/* Déclencheur par turbidité */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Activer par turbidité</Label>
-                <p className="text-xs text-muted-foreground">La lampe s'allume quand la turbidité dépasse le seuil</p>
-              </div>
-              <Switch 
-                checked={settings.lampAutomation.turbidityTriggered}
-                onCheckedChange={handleTurbTriggerToggle}
-                disabled={!settings.lampAutomation.enabled}
-              />
-            </div>
-            
-            {settings.lampAutomation.turbidityTriggered && (
-              <div className="space-y-2 pl-2 border-l-2 border-muted ml-2">
-                <div className="flex justify-between items-center">
-                  <Label>Seuil de turbidité</Label>
-                  <span className="text-muted-foreground">{autoTurbThreshold} NTU</span>
+          {/* Configuration basée sur les capteurs (masquée si mode horaire est activé) */}
+          {!settings.lampAutomation.scheduleMode && settings.lampAutomation.enabled && (
+            <>
+              {/* Déclencheur par température */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Activer par température</Label>
+                    <p className="text-xs text-muted-foreground">La lampe s'allume quand la température dépasse le seuil</p>
+                  </div>
+                  <Switch 
+                    checked={settings.lampAutomation.temperatureTriggered}
+                    onCheckedChange={handleTempTriggerToggle}
+                    disabled={!settings.lampAutomation.enabled}
+                  />
                 </div>
-                <Slider 
-                  defaultValue={[autoTurbThreshold]} 
-                  min={0} 
-                  max={15} 
-                  step={0.5} 
-                  onValueChange={handleTurbTriggerChange}
-                  disabled={!settings.lampAutomation.enabled || !settings.lampAutomation.turbidityTriggered}
-                />
+                
+                {settings.lampAutomation.temperatureTriggered && (
+                  <div className="space-y-2 pl-2 border-l-2 border-muted ml-2">
+                    <div className="flex justify-between items-center">
+                      <Label>Seuil de température</Label>
+                      <span className="text-muted-foreground">{autoTempThreshold}°C</span>
+                    </div>
+                    <Slider 
+                      defaultValue={[autoTempThreshold]} 
+                      min={15} 
+                      max={40} 
+                      step={0.5} 
+                      onValueChange={handleTempTriggerChange}
+                      disabled={!settings.lampAutomation.enabled || !settings.lampAutomation.temperatureTriggered}
+                    />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+              
+              <Separator />
+              
+              {/* Déclencheur par turbidité */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Activer par turbidité</Label>
+                    <p className="text-xs text-muted-foreground">La lampe s'allume quand la turbidité dépasse le seuil</p>
+                  </div>
+                  <Switch 
+                    checked={settings.lampAutomation.turbidityTriggered}
+                    onCheckedChange={handleTurbTriggerToggle}
+                    disabled={!settings.lampAutomation.enabled}
+                  />
+                </div>
+                
+                {settings.lampAutomation.turbidityTriggered && (
+                  <div className="space-y-2 pl-2 border-l-2 border-muted ml-2">
+                    <div className="flex justify-between items-center">
+                      <Label>Seuil de turbidité</Label>
+                      <span className="text-muted-foreground">{autoTurbThreshold} NTU</span>
+                    </div>
+                    <Slider 
+                      defaultValue={[autoTurbThreshold]} 
+                      min={0} 
+                      max={15} 
+                      step={0.5} 
+                      onValueChange={handleTurbTriggerChange}
+                      disabled={!settings.lampAutomation.enabled || !settings.lampAutomation.turbidityTriggered}
+                    />
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

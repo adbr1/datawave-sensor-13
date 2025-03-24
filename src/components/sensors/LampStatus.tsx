@@ -1,5 +1,5 @@
 
-import { Lightbulb, LightbulbOff } from "lucide-react";
+import { Lightbulb, LightbulbOff, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SensorCard from "./SensorCard";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -23,20 +23,25 @@ const LampStatus = ({
   
   // Vérifie si l'automatisation de la lampe est active
   const isAutomatic = settings.lampAutomation.enabled;
+  const isScheduleMode = settings.lampAutomation.scheduleMode;
   
-  // Affiche les conditions d'automatisation si activées
-  const getAutoConditions = () => {
-    const conditions = [];
-    
-    if (settings.lampAutomation.temperatureTriggered) {
-      conditions.push(`Temp > ${settings.lampAutomation.temperatureThreshold}°C`);
+  // Obtient les informations d'horaire ou conditions d'automatisation
+  const getAutoInfo = () => {
+    if (isScheduleMode) {
+      return `${settings.lampAutomation.scheduleOn} - ${settings.lampAutomation.scheduleOff}`;
+    } else {
+      const conditions = [];
+      
+      if (settings.lampAutomation.temperatureTriggered) {
+        conditions.push(`Temp > ${settings.lampAutomation.temperatureThreshold}°C`);
+      }
+      
+      if (settings.lampAutomation.turbidityTriggered) {
+        conditions.push(`Turb > ${settings.lampAutomation.turbidityThreshold} NTU`);
+      }
+      
+      return conditions.join(' ou ');
     }
-    
-    if (settings.lampAutomation.turbidityTriggered) {
-      conditions.push(`Turb > ${settings.lampAutomation.turbidityThreshold} NTU`);
-    }
-    
-    return conditions.join(' ou ');
   };
   
   return (
@@ -73,7 +78,10 @@ const LampStatus = ({
         {isAutomatic && (
           <div className="text-xs text-muted-foreground text-center">
             <span className="font-semibold text-sensor-info">Mode automatique</span>
-            <div>Conditions: {getAutoConditions()}</div>
+            <div className="flex items-center justify-center gap-1">
+              {isScheduleMode && <Clock className="h-3 w-3" />}
+              <span>{getAutoInfo()}</span>
+            </div>
           </div>
         )}
       </div>

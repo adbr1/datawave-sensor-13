@@ -2,6 +2,7 @@
 import { Clock } from "lucide-react";
 import SensorCard from "./SensorCard";
 import { useEffect, useState } from "react";
+import { useSettings } from "@/contexts/SettingsContext";
 
 interface TimeDisplayProps {
   className?: string;
@@ -13,6 +14,7 @@ const TimeDisplay = ({
   animationDelay = 'animation-delay-400'
 }: TimeDisplayProps) => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const { settings } = useSettings();
   
   useEffect(() => {
     // Update time every second
@@ -24,7 +26,7 @@ const TimeDisplay = ({
   }, []);
   
   // Format time as HH:MM:SS
-  const formattedTime = new Intl.DateTimeFormat('en-US', {
+  const formattedTime = new Intl.DateTimeFormat(settings.language === 'fr' ? 'fr-FR' : 'en-US', {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
@@ -32,16 +34,16 @@ const TimeDisplay = ({
   }).format(currentTime);
   
   // Format date as Day, Month DD, YYYY
-  const formattedDate = new Intl.DateTimeFormat('en-US', {
+  const formattedDate = new Intl.DateTimeFormat(settings.language === 'fr' ? 'fr-FR' : 'en-US', {
     weekday: 'long',
-    month: 'short',
     day: 'numeric',
+    month: 'long',
     year: 'numeric'
   }).format(currentTime);
 
   return (
     <SensorCard 
-      title="Current Time" 
+      title="Heure actuelle" 
       icon={<Clock className="h-4 w-4" />}
       className={className}
       animationDelay={animationDelay}

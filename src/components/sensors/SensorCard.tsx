@@ -24,10 +24,11 @@ const SensorCard = ({
   return (
     <div 
       className={cn(
-        "sensor-card flex flex-col",
+        "sensor-card flex flex-col p-4 rounded-lg border",
+        "bg-white dark:bg-slate-900",
         withAnimation && "animate-fade-in",
         animationDelay,
-        alert && "border-2 border-red-500",
+        alert ? "border-2 border-red-500" : "border-border",
         className
       )}
     >

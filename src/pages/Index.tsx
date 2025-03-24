@@ -10,7 +10,7 @@ import DeviceConnection from "@/components/devices/DeviceConnection";
 import { useDeviceConnection } from "@/hooks/useDeviceConnection";
 import { ConnectionStatus } from "@/types/sensorTypes";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -49,11 +49,11 @@ const Index = () => {
         <div className="flex flex-col space-y-8 animate-fade-in">
           <section className="text-center max-w-3xl mx-auto">
             <h1 className="text-4xl font-light tracking-tight mb-3">
-              DataWave Sensor Dashboard
+              Tableau de bord DataWave
             </h1>
             <p className="text-muted-foreground mb-6">
-              Real-time monitoring of your ESP32 water sensor data
-              {isSimulated && <span className="text-sensor-info ml-2">(Simulation Mode)</span>}
+              Surveillance en temps réel de vos capteurs aquatiques ESP32
+              {isSimulated && <span className="text-sensor-info ml-2">(Mode Simulation)</span>}
             </p>
           </section>
 

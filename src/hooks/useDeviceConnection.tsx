@@ -1,22 +1,23 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useBluetoothDevice } from "./useBluetoothDevice";
+import { useWebSocketDevice } from "./useWebSocketDevice";
 import { useSimulatedDevice } from "./useSimulatedDevice";
 import { useSettings } from "@/contexts/SettingsContext";
 import { ConnectionStatus } from "@/types/sensorTypes";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 export function useDeviceConnection() {
   const { settings } = useSettings();
-  const bluetoothDevice = useBluetoothDevice();
+  const webSocketDevice = useWebSocketDevice();
   const simulatedDevice = useSimulatedDevice();
   const [isConnecting, setIsConnecting] = useState(false);
   const [lastAlertTime, setLastAlertTime] = useState<Record<string, number>>({});
+  const [lastScheduleCheck, setLastScheduleCheck] = useState<number>(0);
   
   // Sélectionne le bon gestionnaire en fonction du mode développeur
   const activeDevice = useMemo(() => {
-    return settings.developerMode ? simulatedDevice : bluetoothDevice;
-  }, [settings.developerMode, simulatedDevice, bluetoothDevice]);
+    return settings.developerMode ? simulatedDevice : webSocketDevice;
+  }, [settings.developerMode, simulatedDevice, webSocketDevice]);
   
   // Connect à l'appareil approprié avec gestion des états de connexion
   const connect = useCallback(async () => {
@@ -32,12 +33,9 @@ export function useDeviceConnection() {
       setIsConnecting(false);
       
       if (result) {
-        toast({
-          title: "Connexion réussie",
-          description: settings.developerMode 
-            ? "Mode simulation activé" 
-            : "Connecté à l'appareil ESP32",
-        });
+        toast.success(settings.developerMode 
+          ? "Mode simulation activé" 
+          : "Connecté à l'appareil ESP32");
       }
       
       return result;
@@ -45,11 +43,7 @@ export function useDeviceConnection() {
       setIsConnecting(false);
       console.error("Erreur de connexion:", error);
       
-      toast({
-        title: "Erreur de connexion",
-        description: `${error}`,
-        variant: "destructive",
-      });
+      toast.error(`Erreur de connexion: ${error instanceof Error ? error.message : String(error)}`);
       
       return false;
     }
@@ -60,10 +54,7 @@ export function useDeviceConnection() {
     const result = activeDevice.disconnect();
     
     if (result) {
-      toast({
-        title: "Déconnexion réussie",
-        description: "Déconnecté de l'appareil",
-      });
+      toast.success("Déconnecté de l'appareil");
     }
     
     return result;
@@ -87,18 +78,10 @@ export function useDeviceConnection() {
     if (now - (lastAlertTime.temperature || 0) < 60000) return;
     
     if (temp < minTemp) {
-      toast({
-        title: "Alerte de température",
-        description: `Température basse: ${temp}°C (seuil: ${minTemp}°C)`,
-        variant: "destructive",
-      });
+      toast.error(`Alerte de température: Température basse: ${temp}°C (seuil: ${minTemp}°C)`);
       setLastAlertTime(prev => ({ ...prev, temperature: now }));
     } else if (temp > maxTemp) {
-      toast({
-        title: "Alerte de température",
-        description: `Température élevée: ${temp}°C (seuil: ${maxTemp}°C)`,
-        variant: "destructive",
-      });
+      toast.error(`Alerte de température: Température élevée: ${temp}°C (seuil: ${maxTemp}°C)`);
       setLastAlertTime(prev => ({ ...prev, temperature: now }));
     }
   }, [activeDevice, settings.temperatureAlerts, lastAlertTime]);
@@ -115,18 +98,52 @@ export function useDeviceConnection() {
     if (now - (lastAlertTime.turbidity || 0) < 60000) return;
     
     if (turbidity > threshold) {
-      toast({
-        title: "Alerte de turbidité",
-        description: `Turbidité élevée: ${turbidity} NTU (seuil: ${threshold} NTU)`,
-        variant: "destructive",
-      });
+      toast.error(`Alerte de turbidité: Turbidité élevée: ${turbidity} NTU (seuil: ${threshold} NTU)`);
       setLastAlertTime(prev => ({ ...prev, turbidity: now }));
     }
   }, [activeDevice, settings.turbidityAlerts, lastAlertTime]);
   
+  // Nouvelle fonction pour gérer l'automatisation par horaire
+  const checkScheduleAutomation = useCallback(() => {
+    if (!settings.lampAutomation.enabled || 
+        !settings.lampAutomation.scheduleMode || 
+        activeDevice.status !== ConnectionStatus.CONNECTED) return;
+    
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    
+    // Convertir les heures programmées en minutes depuis minuit
+    const [onHours, onMinutes] = settings.lampAutomation.scheduleOn.split(':').map(Number);
+    const [offHours, offMinutes] = settings.lampAutomation.scheduleOff.split(':').map(Number);
+    
+    const onTime = onHours * 60 + onMinutes;
+    const offTime = offHours * 60 + offMinutes;
+    
+    const { lampStatus } = activeDevice.sensorData;
+    
+    // Si l'heure actuelle est entre l'heure d'allumage et d'extinction
+    const isTimeToBeOn = onTime <= offTime 
+      ? (currentTime >= onTime && currentTime < offTime)  // Même jour
+      : (currentTime >= onTime || currentTime < offTime); // Sur deux jours (ex: 22:00 à 06:00)
+    
+    // Ne vérifie que toutes les minutes pour éviter trop d'appels
+    if (now.getTime() - lastScheduleCheck < 60000) return;
+    setLastScheduleCheck(now.getTime());
+    
+    if (isTimeToBeOn && !lampStatus) {
+      toggleLamp();
+      toast.success("Lampe activée automatiquement selon l'horaire programmé");
+    } else if (!isTimeToBeOn && lampStatus) {
+      toggleLamp();
+      toast.success("Lampe désactivée automatiquement selon l'horaire programmé");
+    }
+  }, [activeDevice, settings.lampAutomation, toggleLamp, lastScheduleCheck]);
+  
   // Fonction pour gérer l'automatisation de la lampe
-  const checkLampAutomation = useCallback(() => {
-    if (!settings.lampAutomation.enabled || activeDevice.status !== ConnectionStatus.CONNECTED) return;
+  const checkSensorAutomation = useCallback(() => {
+    if (!settings.lampAutomation.enabled || 
+        settings.lampAutomation.scheduleMode || 
+        activeDevice.status !== ConnectionStatus.CONNECTED) return;
     
     const { temperature, turbidity, lampStatus } = activeDevice.sensorData;
     const { 
@@ -150,16 +167,10 @@ export function useDeviceConnection() {
     // Active ou désactive la lampe si nécessaire
     if (shouldActivateLamp && !lampStatus) {
       toggleLamp();
-      toast({
-        title: "Automatisation de lampe",
-        description: "La lampe a été activée automatiquement",
-      });
+      toast.success("La lampe a été activée automatiquement suite aux mesures");
     } else if (!shouldActivateLamp && lampStatus) {
       toggleLamp();
-      toast({
-        title: "Automatisation de lampe",
-        description: "La lampe a été désactivée automatiquement",
-      });
+      toast.success("La lampe a été désactivée automatiquement suite aux mesures");
     }
   }, [activeDevice, settings.lampAutomation, toggleLamp]);
   
@@ -168,14 +179,16 @@ export function useDeviceConnection() {
     if (activeDevice.status === ConnectionStatus.CONNECTED) {
       checkTemperatureAlerts();
       checkTurbidityAlerts();
-      checkLampAutomation();
+      checkScheduleAutomation();
+      checkSensorAutomation();
     }
   }, [
     activeDevice.status, 
     activeDevice.sensorData, 
     checkTemperatureAlerts, 
     checkTurbidityAlerts, 
-    checkLampAutomation
+    checkScheduleAutomation,
+    checkSensorAutomation
   ]);
 
   return {

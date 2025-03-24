@@ -8,7 +8,7 @@ export interface AppSettings {
   refreshRate: number; // milliseconds
   connectionTimeout: number; // seconds
   language: "fr" | "en";
-  // Nouveaux paramètres pour les alertes et automatisations
+  // Paramètres pour les alertes et automatisations
   temperatureAlerts: {
     enabled: boolean;
     minThreshold: number;
@@ -20,6 +20,11 @@ export interface AppSettings {
   };
   lampAutomation: {
     enabled: boolean;
+    // Nouvelle configuration basée sur l'horaire
+    scheduleMode: boolean;
+    scheduleOn: string; // Format "HH:MM"
+    scheduleOff: string; // Format "HH:MM"
+    // Anciens paramètres (conservés pour compatibilité)
     temperatureTriggered: boolean;
     temperatureThreshold: number;
     turbidityTriggered: boolean;
@@ -48,6 +53,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
   },
   lampAutomation: {
     enabled: false,
+    // Valeurs par défaut pour l'horaire
+    scheduleMode: true,
+    scheduleOn: "08:00",
+    scheduleOff: "20:00",
+    // Anciens paramètres
     temperatureTriggered: false,
     temperatureThreshold: 28,
     turbidityTriggered: false,
