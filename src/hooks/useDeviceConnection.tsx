@@ -23,7 +23,7 @@ export function useDeviceConnection() {
   const connect = useCallback(async (ipAddress?: string, port?: string) => {
     // Empêche les tentatives de connexion multiples
     if (isConnecting || activeDevice.status === ConnectionStatus.CONNECTED) {
-      return false;
+      return true; // Retourner true si déjà connecté pour permettre la navigation
     }
     
     setIsConnecting(true);
@@ -106,7 +106,7 @@ export function useDeviceConnection() {
     }
   }, [activeDevice, settings.turbidityAlerts, lastAlertTime]);
   
-  // Nouvelle fonction pour gérer l'automatisation par horaire
+  // Fonction pour gérer l'automatisation par horaire
   const checkScheduleAutomation = useCallback(() => {
     if (!settings.lampAutomation.enabled || 
         !settings.lampAutomation.scheduleMode || 

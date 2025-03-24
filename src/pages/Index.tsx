@@ -28,6 +28,15 @@ const Index = () => {
 
   const isConnected = status === ConnectionStatus.CONNECTED;
 
+  // Essaie de se reconnecter automatiquement au démarrage si l'ESP n'est pas connecté
+  useEffect(() => {
+    // On tente de connecter seulement si on n'est pas déjà connecté ou en cours de connexion
+    if (status === ConnectionStatus.DISCONNECTED && !isConnecting && !isConnected) {
+      // On essaie de se connecter avec les paramètres existants (mode simulé ou dernière adresse IP/port)
+      connect();
+    }
+  }, [status, connect, isConnecting, isConnected]);
+
   const handleConnect = async () => {
     // Si l'appareil n'est pas connecté, on tente de le connecter directement
     if (status === ConnectionStatus.DISCONNECTED) {
