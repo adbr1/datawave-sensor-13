@@ -1,5 +1,5 @@
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useBluetoothDevice } from "./useBluetoothDevice";
 import { useSimulatedDevice } from "./useSimulatedDevice";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -11,6 +11,7 @@ export function useDeviceConnection() {
   const bluetoothDevice = useBluetoothDevice();
   const simulatedDevice = useSimulatedDevice();
   const [isConnecting, setIsConnecting] = useState(false);
+  const [lastAlertTime, setLastAlertTime] = useState<Record<string, number>>({});
   
   // Sélectionne le bon gestionnaire en fonction du mode développeur
   const activeDevice = useMemo(() => {
@@ -72,6 +73,110 @@ export function useDeviceConnection() {
   const toggleLamp = useCallback(async () => {
     return activeDevice.toggleLamp();
   }, [activeDevice]);
+
+  // Fonction pour vérifier les alertes de température
+  const checkTemperatureAlerts = useCallback(() => {
+    if (!settings.temperatureAlerts.enabled || activeDevice.status !== ConnectionStatus.CONNECTED) return;
+    
+    const temp = activeDevice.sensorData.temperature;
+    const minTemp = settings.temperatureAlerts.minThreshold;
+    const maxTemp = settings.temperatureAlerts.maxThreshold;
+    const now = Date.now();
+    
+    // Empêche les alertes trop fréquentes (au plus une par minute)
+    if (now - (lastAlertTime.temperature || 0) < 60000) return;
+    
+    if (temp < minTemp) {
+      toast({
+        title: "Alerte de température",
+        description: `Température basse: ${temp}°C (seuil: ${minTemp}°C)`,
+        variant: "destructive",
+      });
+      setLastAlertTime(prev => ({ ...prev, temperature: now }));
+    } else if (temp > maxTemp) {
+      toast({
+        title: "Alerte de température",
+        description: `Température élevée: ${temp}°C (seuil: ${maxTemp}°C)`,
+        variant: "destructive",
+      });
+      setLastAlertTime(prev => ({ ...prev, temperature: now }));
+    }
+  }, [activeDevice, settings.temperatureAlerts, lastAlertTime]);
+  
+  // Fonction pour vérifier les alertes de turbidité
+  const checkTurbidityAlerts = useCallback(() => {
+    if (!settings.turbidityAlerts.enabled || activeDevice.status !== ConnectionStatus.CONNECTED) return;
+    
+    const turbidity = activeDevice.sensorData.turbidity;
+    const threshold = settings.turbidityAlerts.threshold;
+    const now = Date.now();
+    
+    // Empêche les alertes trop fréquentes (au plus une par minute)
+    if (now - (lastAlertTime.turbidity || 0) < 60000) return;
+    
+    if (turbidity > threshold) {
+      toast({
+        title: "Alerte de turbidité",
+        description: `Turbidité élevée: ${turbidity} NTU (seuil: ${threshold} NTU)`,
+        variant: "destructive",
+      });
+      setLastAlertTime(prev => ({ ...prev, turbidity: now }));
+    }
+  }, [activeDevice, settings.turbidityAlerts, lastAlertTime]);
+  
+  // Fonction pour gérer l'automatisation de la lampe
+  const checkLampAutomation = useCallback(() => {
+    if (!settings.lampAutomation.enabled || activeDevice.status !== ConnectionStatus.CONNECTED) return;
+    
+    const { temperature, turbidity, lampStatus } = activeDevice.sensorData;
+    const { 
+      temperatureTriggered, 
+      temperatureThreshold, 
+      turbidityTriggered, 
+      turbidityThreshold 
+    } = settings.lampAutomation;
+    
+    let shouldActivateLamp = false;
+    
+    // Vérifie les conditions d'activation
+    if (temperatureTriggered && temperature > temperatureThreshold) {
+      shouldActivateLamp = true;
+    }
+    
+    if (turbidityTriggered && turbidity > turbidityThreshold) {
+      shouldActivateLamp = true;
+    }
+    
+    // Active ou désactive la lampe si nécessaire
+    if (shouldActivateLamp && !lampStatus) {
+      toggleLamp();
+      toast({
+        title: "Automatisation de lampe",
+        description: "La lampe a été activée automatiquement",
+      });
+    } else if (!shouldActivateLamp && lampStatus) {
+      toggleLamp();
+      toast({
+        title: "Automatisation de lampe",
+        description: "La lampe a été désactivée automatiquement",
+      });
+    }
+  }, [activeDevice, settings.lampAutomation, toggleLamp]);
+  
+  // Vérifie les alertes et automatisations lorsque les données sont mises à jour
+  useEffect(() => {
+    if (activeDevice.status === ConnectionStatus.CONNECTED) {
+      checkTemperatureAlerts();
+      checkTurbidityAlerts();
+      checkLampAutomation();
+    }
+  }, [
+    activeDevice.status, 
+    activeDevice.sensorData, 
+    checkTemperatureAlerts, 
+    checkTurbidityAlerts, 
+    checkLampAutomation
+  ]);
 
   return {
     connect,

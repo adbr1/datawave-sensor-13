@@ -2,6 +2,7 @@
 import { Lightbulb, LightbulbOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SensorCard from "./SensorCard";
+import { useSettings } from "@/contexts/SettingsContext";
 
 interface LampStatusProps {
   isOn: boolean;
@@ -18,9 +19,29 @@ const LampStatus = ({
   className,
   animationDelay = 'animation-delay-300'
 }: LampStatusProps) => {
+  const { settings } = useSettings();
+  
+  // Vérifie si l'automatisation de la lampe est active
+  const isAutomatic = settings.lampAutomation.enabled;
+  
+  // Affiche les conditions d'automatisation si activées
+  const getAutoConditions = () => {
+    const conditions = [];
+    
+    if (settings.lampAutomation.temperatureTriggered) {
+      conditions.push(`Temp > ${settings.lampAutomation.temperatureThreshold}°C`);
+    }
+    
+    if (settings.lampAutomation.turbidityTriggered) {
+      conditions.push(`Turb > ${settings.lampAutomation.turbidityThreshold} NTU`);
+    }
+    
+    return conditions.join(' ou ');
+  };
+  
   return (
     <SensorCard 
-      title="Lamp Status" 
+      title="Statut de la lampe" 
       icon={isOn ? <Lightbulb className="h-4 w-4 text-sensor-warning" /> : <LightbulbOff className="h-4 w-4" />}
       className={className}
       animationDelay={animationDelay}
@@ -42,12 +63,19 @@ const LampStatus = ({
         
         <Button
           onClick={onToggle}
-          disabled={!isConnected}
+          disabled={!isConnected || isAutomatic}
           variant={isOn ? "outline" : "default"}
           className="transition-all duration-300"
         >
-          {isOn ? "Turn Off" : "Turn On"}
+          {isOn ? "Éteindre" : "Allumer"}
         </Button>
+        
+        {isAutomatic && (
+          <div className="text-xs text-muted-foreground text-center">
+            <span className="font-semibold text-sensor-info">Mode automatique</span>
+            <div>Conditions: {getAutoConditions()}</div>
+          </div>
+        )}
       </div>
     </SensorCard>
   );

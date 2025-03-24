@@ -10,10 +10,10 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import MainLayout from "@/components/layout/MainLayout";
-import { Bug, RefreshCw, BellRing, Moon, Globe } from "lucide-react";
+import { Bug, RefreshCw, BellRing, Moon, Globe, Bell, Gauge } from "lucide-react";
 import { toast } from "sonner";
+import SensorSettings from "@/components/settings/SensorSettings";
 
 const Settings = () => {
   const { settings, updateSettings, resetSettings } = useSettings();
@@ -47,6 +47,7 @@ const Settings = () => {
             <TabsTrigger value="general">Général</TabsTrigger>
             <TabsTrigger value="connection">Connexion</TabsTrigger>
             <TabsTrigger value="display">Affichage</TabsTrigger>
+            <TabsTrigger value="sensors">Capteurs</TabsTrigger>
             <TabsTrigger value="advanced">Avancé</TabsTrigger>
           </TabsList>
 
@@ -152,6 +153,18 @@ const Settings = () => {
                 </select>
               </div>
             </div>
+          </TabsContent>
+
+          {/* Nouvel onglet Capteurs */}
+          <TabsContent value="sensors" className="space-y-4">
+            <div className="space-y-2 mb-4">
+              <h2 className="text-xl font-medium">Configuration des capteurs</h2>
+              <p className="text-muted-foreground">
+                Configurez les seuils d'alerte et l'automatisation pour vos capteurs
+              </p>
+            </div>
+            
+            <SensorSettings />
           </TabsContent>
 
           {/* Onglet Avancé */}
