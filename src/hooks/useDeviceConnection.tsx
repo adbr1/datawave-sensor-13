@@ -13,6 +13,7 @@ export function useDeviceConnection() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [lastAlertTime, setLastAlertTime] = useState<Record<string, number>>({});
   const [lastScheduleCheck, setLastScheduleCheck] = useState<number>(0);
+  const [lastMealCheck, setLastMealCheck] = useState<Record<string, number>>({});
   
   // Sélectionne le bon gestionnaire en fonction du mode développeur
   const activeDevice = useMemo(() => {
@@ -201,6 +202,37 @@ export function useDeviceConnection() {
     }
   }, [activeDevice, settings.lampAutomation, toggleLamp]);
   
+  // Nouvelle fonction pour gérer les repas des poissons
+  const checkFishMeals = useCallback(() => {
+    if (!settings.fishMeals.enabled || 
+        activeDevice.status !== ConnectionStatus.CONNECTED ||
+        settings.fishMeals.meals.length === 0) return;
+    
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTimeString = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+    
+    // Pour chaque repas configuré et activé
+    settings.fishMeals.meals.forEach(meal => {
+      if (!meal.enabled) return;
+      
+      // Vérifie si l'heure actuelle correspond à l'heure du repas
+      if (currentTimeString === meal.time) {
+        const now = Date.now();
+        // Évite les déclenchements multiples pour le même repas (vérification toutes les heures)
+        if (now - (lastMealCheck[meal.id] || 0) < 3600000) return;
+        
+        // Lance le repas
+        toast.success(`C'est l'heure du repas des poissons ! (${meal.time})`);
+        // TODO: Ajouter le code pour actionner le distributeur de nourriture
+        
+        // Marque ce repas comme traité pour éviter les doublons
+        setLastMealCheck(prev => ({ ...prev, [meal.id]: now }));
+      }
+    });
+  }, [activeDevice, settings.fishMeals, lastMealCheck]);
+  
   // Vérifie les alertes et automatisations lorsque les données sont mises à jour
   useEffect(() => {
     if (activeDevice.status === ConnectionStatus.CONNECTED) {
@@ -208,6 +240,7 @@ export function useDeviceConnection() {
       checkTurbidityAlerts();
       checkScheduleAutomation();
       checkSensorAutomation();
+      checkFishMeals();
     }
   }, [
     activeDevice.status, 
@@ -215,7 +248,8 @@ export function useDeviceConnection() {
     checkTemperatureAlerts, 
     checkTurbidityAlerts, 
     checkScheduleAutomation,
-    checkSensorAutomation
+    checkSensorAutomation,
+    checkFishMeals
   ]);
 
   return {

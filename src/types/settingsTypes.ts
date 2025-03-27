@@ -1,4 +1,10 @@
 
+export interface MealTime {
+  id: string;
+  time: string; // Format "HH:MM"
+  enabled: boolean;
+}
+
 export interface AppSettings {
   developerMode: boolean;
   bluetoothAutoConnect: boolean;
@@ -30,6 +36,11 @@ export interface AppSettings {
     temperatureThreshold: number;
     turbidityTriggered: boolean;
     turbidityThreshold: number;
+  };
+  // Paramètres pour les repas des poissons
+  fishMeals: {
+    enabled: boolean;
+    meals: MealTime[];
   };
 }
 
@@ -64,5 +75,21 @@ export const DEFAULT_SETTINGS: AppSettings = {
     temperatureThreshold: 28,
     turbidityTriggered: false,
     turbidityThreshold: 7
+  },
+  // Valeurs par défaut pour les repas des poissons
+  fishMeals: {
+    enabled: false,
+    meals: [
+      {
+        id: "1",
+        time: "08:00",
+        enabled: true
+      },
+      {
+        id: "2", 
+        time: "18:00",
+        enabled: true
+      }
+    ]
   }
 };

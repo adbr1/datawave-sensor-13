@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -6,9 +5,10 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import MainLayout from "@/components/layout/MainLayout";
-import { Bug, RefreshCw, BellRing, Globe, Bell, Gauge } from "lucide-react";
+import { Bug, RefreshCw, BellRing, Globe, Bell, Gauge, Fish } from "lucide-react";
 import { toast } from "sonner";
 import SensorSettings from "@/components/settings/SensorSettings";
+import FishMealsSettings from "@/components/settings/FishMealsSettings";
 import { Button } from "@/components/ui/button";
 
 const Settings = () => {
@@ -47,6 +47,7 @@ const Settings = () => {
             <TabsTrigger value="connection">Connexion</TabsTrigger>
             <TabsTrigger value="display">Affichage</TabsTrigger>
             <TabsTrigger value="sensors">Capteurs</TabsTrigger>
+            <TabsTrigger value="meals">Repas</TabsTrigger>
             <TabsTrigger value="advanced">Avancé</TabsTrigger>
           </TabsList>
 
@@ -148,6 +149,18 @@ const Settings = () => {
             </div>
             
             <SensorSettings />
+          </TabsContent>
+
+          {/* Nouvel onglet Repas */}
+          <TabsContent value="meals" className="space-y-4">
+            <div className="space-y-2 mb-4">
+              <h2 className="text-xl font-medium">Repas des poissons</h2>
+              <p className="text-muted-foreground">
+                Configurez les horaires des repas quotidiens pour automatiser l'alimentation
+              </p>
+            </div>
+            
+            <FishMealsSettings />
           </TabsContent>
 
           {/* Onglet Avancé */}
