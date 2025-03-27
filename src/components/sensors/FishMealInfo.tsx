@@ -1,14 +1,18 @@
 
-import { Card } from "@/components/ui/card";
+import { Clock, Fish } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
-import { Fish, Clock } from "lucide-react";
 import { useMemo } from "react";
+import SensorCard from "./SensorCard";
 
 interface FishMealInfoProps {
   animationDelay?: string;
+  className?: string;
 }
 
-const FishMealInfo = ({ animationDelay = "" }: FishMealInfoProps) => {
+const FishMealInfo = ({ 
+  animationDelay = 'animation-delay-500',
+  className
+}: FishMealInfoProps) => {
   const { settings } = useSettings();
   
   const { lastMeal, nextMeal } = useMemo(() => {
@@ -69,26 +73,26 @@ const FishMealInfo = ({ animationDelay = "" }: FishMealInfoProps) => {
   }, [settings.fishMeals.meals]);
 
   return (
-    <Card className={`p-4 ${animationDelay} animate-scale-in sensor-card`}>
-      <div className="flex items-center mb-3">
-        <Fish className="h-5 w-5 text-blue-500 mr-2" />
-        <h3 className="text-lg font-medium">Repas des poissons</h3>
-      </div>
-      
-      <div className="space-y-3 mt-4">
-        <div className="flex items-center text-sm">
+    <SensorCard 
+      title="Repas des poissons" 
+      icon={<Fish className="h-4 w-4" />}
+      className={className}
+      animationDelay={animationDelay}
+    >
+      <div className="flex flex-col items-center justify-center space-y-3">
+        <div className="flex items-center text-sm w-full">
           <Clock className="h-4 w-4 text-gray-400 mr-2" />
           <span className="text-muted-foreground">Dernier repas:</span>
           <span className="ml-auto font-medium">{lastMeal}</span>
         </div>
         
-        <div className="flex items-center text-sm">
+        <div className="flex items-center text-sm w-full">
           <Clock className="h-4 w-4 text-gray-400 mr-2" />
           <span className="text-muted-foreground">Prochain repas:</span>
           <span className="ml-auto font-medium">{nextMeal}</span>
         </div>
       </div>
-    </Card>
+    </SensorCard>
   );
 };
 
