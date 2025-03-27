@@ -1,15 +1,18 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Settings, Menu, X } from "lucide-react";
+import { Settings, Menu, X, BellRing } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNotifications } from "@/hooks/useNotifications";
-import { BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSettings } from "@/contexts/SettingsContext";
+
 interface HeaderProps {
   title: string;
   className?: string;
 }
+
 const Header = ({
   title,
   className
@@ -22,6 +25,8 @@ const Header = ({
     permission,
     requestPermission
   } = useNotifications();
+  const { settings } = useSettings();
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -29,14 +34,17 @@ const Header = ({
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
+
   const handleRequestNotifications = async () => {
     if (isSupported && permission !== 'granted') {
       await requestPermission();
     }
   };
+
   return <header className={cn("fixed top-0 left-0 right-0 z-50 transition-all duration-300", scrolled ? "bg-white/80 backdrop-blur-md shadow-sm" : "bg-transparent", className)}>
       <div className="container max-w-7xl mx-auto flex items-center justify-between py-3 px-4">
         <Link to="/" className="flex items-center z-20">
@@ -63,7 +71,20 @@ const Header = ({
                     Paramètres
                   </Link>
                   
-                  {isSupported && permission !== 'granted'}
+                  {isSupported && permission !== 'granted' && !settings.notificationsEnabled && (
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="flex items-center gap-2"
+                      onClick={() => {
+                        handleRequestNotifications();
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      <BellRing className="h-4 w-4" />
+                      Activer les notifications
+                    </Button>
+                  )}
                 </nav>
               </div>}
           </> : <nav className="flex items-center space-x-6">
@@ -78,9 +99,20 @@ const Header = ({
               Paramètres
             </Link>
             
-            {isSupported && permission !== 'granted'}
+            {isSupported && permission !== 'granted' && !settings.notificationsEnabled && (
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="flex items-center gap-2"
+                onClick={handleRequestNotifications}
+              >
+                <BellRing className="h-4 w-4" />
+                Activer les notifications
+              </Button>
+            )}
           </nav>}
       </div>
     </header>;
 };
+
 export default Header;

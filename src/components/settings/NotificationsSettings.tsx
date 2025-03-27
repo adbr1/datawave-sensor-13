@@ -99,7 +99,7 @@ const NotificationsSettings = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {!isSupported ? (
-            <Alert variant="warning" className="bg-amber-50 border-amber-200">
+            <Alert className="bg-amber-50 border-amber-200">
               <AlertTriangle className="h-4 w-4 text-amber-600" />
               <AlertTitle className="text-amber-800">Navigateur non compatible</AlertTitle>
               <AlertDescription className="text-amber-700">
@@ -135,7 +135,7 @@ const NotificationsSettings = () => {
               )}
 
               {permission === 'granted' && (
-                <Alert variant="default" className="bg-green-50 border-green-200">
+                <Alert className="bg-green-50 border-green-200">
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   <AlertTitle className="text-green-800">Notifications activées</AlertTitle>
                   <AlertDescription className="text-green-700">
@@ -198,7 +198,13 @@ const NotificationsSettings = () => {
                 </span>
               </div>
               <Switch 
-                checked={true}
+                checked={settings.temperatureAlerts.enabled}
+                onCheckedChange={(checked) => updateSettings({
+                  temperatureAlerts: {
+                    ...settings.temperatureAlerts,
+                    enabled: checked
+                  }
+                })}
                 disabled={!settings.notificationsEnabled}
               />
             </div>
@@ -211,7 +217,13 @@ const NotificationsSettings = () => {
                 </span>
               </div>
               <Switch 
-                checked={true}
+                checked={settings.turbidityAlerts.enabled}
+                onCheckedChange={(checked) => updateSettings({
+                  turbidityAlerts: {
+                    ...settings.turbidityAlerts,
+                    enabled: checked
+                  }
+                })}
                 disabled={!settings.notificationsEnabled}
               />
             </div>
@@ -224,7 +236,13 @@ const NotificationsSettings = () => {
                 </span>
               </div>
               <Switch 
-                checked={true}
+                checked={settings.fishMeals.enabled}
+                onCheckedChange={(checked) => updateSettings({
+                  fishMeals: {
+                    ...settings.fishMeals,
+                    enabled: checked
+                  }
+                })}
                 disabled={!settings.notificationsEnabled}
               />
             </div>
