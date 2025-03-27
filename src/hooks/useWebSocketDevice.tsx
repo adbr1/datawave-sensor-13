@@ -15,7 +15,7 @@ export function useWebSocketDevice() {
   const { settings } = useSettings();
   const [status, setStatus] = useState<ConnectionStatus>(ConnectionStatus.DISCONNECTED);
   const [sensorData, setSensorData] = useState<SensorData>(INITIAL_SENSOR_DATA);
-  const [isSupported, setIsSupported] = useState<boolean>(true); // WebSocket est supporté par tous les navigateurs modernes
+  const [isSupported, setIsSupported] = useState<boolean>(true);
   const [device, setDevice] = useState<{ name: string } | null>(null);
   const [serverAddress, setServerAddress] = useState<string>("");
   const socketRef = useRef<WebSocket | null>(null);
@@ -32,6 +32,11 @@ export function useWebSocketDevice() {
     if (!isSupported) {
       toast.error("WebSocket n'est pas supporté par votre navigateur");
       return false;
+    }
+    
+    // Si déjà connecté, retourner true
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      return true;
     }
     
     try {
@@ -51,6 +56,11 @@ export function useWebSocketDevice() {
         const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
         wsServerUrl = `${protocol}${ipAddress}:${port}`;
         setServerAddress(`${ipAddress}:${port}`);
+      } else if (settings.lastIpAddress && settings.lastPort) {
+        // Utiliser les dernières valeurs stockées
+        const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        wsServerUrl = `${protocol}${settings.lastIpAddress}:${settings.lastPort}`;
+        setServerAddress(`${settings.lastIpAddress}:${settings.lastPort}`);
       } else {
         toast.error("Adresse IP ou port manquant");
         setStatus(ConnectionStatus.DISCONNECTED);
@@ -65,7 +75,7 @@ export function useWebSocketDevice() {
       
       socket.onopen = () => {
         setStatus(ConnectionStatus.CONNECTED);
-        setDevice({ name: `ESP32 (${serverAddress})` });
+        setDevice({ name: `ESP32 (${serverAddress || wsServerUrl})` });
         toast.success("Connecté au serveur WebSocket");
         
         // Demander les données initiales
@@ -130,7 +140,7 @@ export function useWebSocketDevice() {
       toast.error(`Erreur: ${error instanceof Error ? error.message : String(error)}`);
       return false;
     }
-  }, [isSupported, settings.connectionTimeout, serverAddress]);
+  }, [isSupported, settings.connectionTimeout, serverAddress, settings.lastIpAddress, settings.lastPort]);
   
   // Déconnexion du WebSocket
   const disconnect = useCallback(() => {

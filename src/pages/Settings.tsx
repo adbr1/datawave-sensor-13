@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -9,6 +10,7 @@ import { Bug, RefreshCw, BellRing, Globe, Bell, Gauge } from "lucide-react";
 import { toast } from "sonner";
 import SensorSettings from "@/components/settings/SensorSettings";
 import { Button } from "@/components/ui/button";
+
 const Settings = () => {
   const {
     settings,
@@ -16,6 +18,7 @@ const Settings = () => {
     resetSettings
   } = useSettings();
   const [confirmReset, setConfirmReset] = useState(false);
+  
   const handleReset = () => {
     if (confirmReset) {
       resetSettings();
@@ -28,6 +31,7 @@ const Settings = () => {
       });
     }
   };
+  
   return <MainLayout title="Paramètres" className="max-w-4xl">
       <div className="space-y-6">
         <div>
@@ -82,6 +86,20 @@ const Settings = () => {
             <div className="rounded-lg border p-4 space-y-4">
               <h2 className="text-xl font-medium">Paramètres de connexion</h2>
               
+              <div className="space-y-2">
+                <Label htmlFor="ipaddress">Adresse IP par défaut</Label>
+                <Input id="ipaddress" type="text" placeholder="192.168.1.1" value={settings.lastIpAddress} onChange={e => updateSettings({
+                lastIpAddress: e.target.value
+              })} />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="port">Port par défaut</Label>
+                <Input id="port" type="text" placeholder="81" value={settings.lastPort} onChange={e => updateSettings({
+                lastPort: e.target.value
+              })} />
+              </div>
+
               <div className="flex items-center space-x-2">
                 <div className="flex-1">
                   <Label htmlFor="autoconnect">Connexion automatique</Label>
@@ -137,7 +155,17 @@ const Settings = () => {
             <div className="rounded-lg border p-4 space-y-4">
               <h2 className="text-xl font-medium">Paramètres avancés</h2>
               
-              
+              <div className="flex items-center space-x-2">
+                <div className="flex-1">
+                  <Label htmlFor="dev-mode">Mode développeur</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Activer les données simulées pour le développement
+                  </p>
+                </div>
+                <Switch id="dev-mode" checked={settings.developerMode} onCheckedChange={checked => updateSettings({
+                developerMode: checked
+              })} />
+              </div>
 
               <div className="flex items-center space-x-2">
                 <RefreshCw className="h-5 w-5 text-muted-foreground" />
@@ -173,4 +201,5 @@ const Settings = () => {
       </div>
     </MainLayout>;
 };
+
 export default Settings;

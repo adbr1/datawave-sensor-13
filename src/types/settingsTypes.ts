@@ -7,6 +7,8 @@ export interface AppSettings {
   refreshRate: number; // milliseconds
   connectionTimeout: number; // seconds
   language: "fr" | "en";
+  lastIpAddress: string; // Store the last used IP address
+  lastPort: string; // Store the last used port
   // Paramètres pour les alertes et automatisations
   temperatureAlerts: {
     enabled: boolean;
@@ -39,6 +41,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   refreshRate: 1000,
   connectionTimeout: 30,
   language: "fr",
+  lastIpAddress: "",
+  lastPort: "",
   // Valeurs par défaut pour les alertes et automatisations
   temperatureAlerts: {
     enabled: false,

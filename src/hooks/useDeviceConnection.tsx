@@ -7,7 +7,7 @@ import { ConnectionStatus } from "@/types/sensorTypes";
 import { toast } from "sonner";
 
 export function useDeviceConnection() {
-  const { settings } = useSettings();
+  const { settings, updateSettings } = useSettings();
   const webSocketDevice = useWebSocketDevice();
   const simulatedDevice = useSimulatedDevice();
   const [isConnecting, setIsConnecting] = useState(false);
@@ -21,17 +21,41 @@ export function useDeviceConnection() {
   
   // Connect à l'appareil approprié avec gestion des états de connexion
   const connect = useCallback(async (ipAddress?: string, port?: string) => {
+    // Si déjà connecté, on retourne simplement true pour permettre la navigation
+    if (activeDevice.status === ConnectionStatus.CONNECTED) {
+      return true;
+    }
+    
     // Empêche les tentatives de connexion multiples
-    if (isConnecting || activeDevice.status === ConnectionStatus.CONNECTED) {
-      return true; // Retourner true si déjà connecté pour permettre la navigation
+    if (isConnecting) {
+      return false;
     }
     
     setIsConnecting(true);
     
     try {
-      const result = settings.developerMode 
-        ? await activeDevice.connect()
-        : await webSocketDevice.connect(ipAddress, port);
+      let result;
+      
+      if (settings.developerMode) {
+        // En mode dev, on utilise le simulateur
+        result = await simulatedDevice.connect();
+      } else {
+        // En mode réel, on utilise le WebSocket avec IP et port
+        if (ipAddress && port) {
+          // Stocker l'adresse IP et le port pour les futures connexions
+          updateSettings({
+            lastIpAddress: ipAddress,
+            lastPort: port
+          });
+          result = await webSocketDevice.connect(ipAddress, port);
+        } else if (settings.lastIpAddress && settings.lastPort) {
+          // Utiliser les derniers paramètres connus
+          result = await webSocketDevice.connect(settings.lastIpAddress, settings.lastPort);
+        } else {
+          // Pas d'informations de connexion disponibles
+          result = await webSocketDevice.connect();
+        }
+      }
       
       setIsConnecting(false);
       
@@ -50,7 +74,7 @@ export function useDeviceConnection() {
       
       return false;
     }
-  }, [activeDevice, isConnecting, settings.developerMode, webSocketDevice]);
+  }, [activeDevice, isConnecting, settings.developerMode, webSocketDevice, simulatedDevice, settings.lastIpAddress, settings.lastPort, updateSettings]);
   
   // Déconnecte l'appareil actif
   const disconnect = useCallback(() => {
