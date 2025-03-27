@@ -1,26 +1,30 @@
 
-import { createRoot } from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
-import { register } from './serviceWorkerRegistration';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import "./index.css";
 
-createRoot(document.getElementById("root")!).render(<App />);
-
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://cra.link/PWA
-register({
-  onUpdate: (registration) => {
-    const waitingServiceWorker = registration.waiting;
-    
-    if (waitingServiceWorker) {
-      waitingServiceWorker.addEventListener("statechange", (event) => {
-        // @ts-ignore
-        if (event.target?.state === "activated") {
-          window.location.reload();
-        }
-      });
-      waitingServiceWorker.postMessage({ type: "SKIP_WAITING" });
+// Register service worker for push notifications
+const registerServiceWorker = async () => {
+  if ('serviceWorker' in navigator) {
+    try {
+      await navigator.serviceWorker.register('/service-worker.js');
+      console.log('Service worker registered successfully');
+    } catch (error) {
+      console.error('Erreur pendant l\'enregistrement du service worker:', error);
     }
-  },
-});
+  }
+};
+
+// Initialize the application
+const initialize = async () => {
+  await registerServiceWorker();
+  
+  ReactDOM.createRoot(document.getElementById("root")!).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+};
+
+initialize();

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSettings } from '@/contexts/SettingsContext';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 const SERVER_VAPID_PUBLIC_KEY = 'BJtus6bWCVMRQ7EFKGpWnqErNMJWRZO6YHJbCEPo7lsC-KCWnkiEOUYXdHSNZTRXDXX7h7Yl0wnJaDtcmBjQtA4'; // Clé pub VAPID factice, à remplacer en production
 
@@ -10,6 +10,7 @@ export function useNotifications() {
   const [permission, setPermission] = useState<NotificationPermission | null>(null);
   const [subscription, setSubscription] = useState<PushSubscription | null>(null);
   const [isSupported, setIsSupported] = useState(false);
+  const [serviceWorkerRegistration, setServiceWorkerRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
   // Vérifier si les notifications sont supportées
   useEffect(() => {
@@ -18,15 +19,27 @@ export function useNotifications() {
     
     if (supported) {
       setPermission(Notification.permission);
+      
+      // Enregistrer le service worker dès le départ
+      if (navigator.serviceWorker) {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            console.log('Service Worker enregistré avec succès:', registration);
+            setServiceWorkerRegistration(registration);
+          })
+          .catch(error => {
+            console.error('Erreur pendant l\'enregistrement du service worker:', error);
+          });
+      }
     }
   }, []);
 
   // Enregistrer ou mettre à jour le statut d'abonnement
   useEffect(() => {
-    if (isSupported && permission === 'granted' && settings.notificationsEnabled) {
-      subscribeUserToPush();
+    if (isSupported && permission === 'granted' && settings.notificationsEnabled && serviceWorkerRegistration) {
+      subscribeUserToPush(serviceWorkerRegistration);
     }
-  }, [isSupported, permission, settings.notificationsEnabled]);
+  }, [isSupported, permission, settings.notificationsEnabled, serviceWorkerRegistration]);
 
   // Demander l'autorisation des notifications
   const requestPermission = async (): Promise<boolean> => {
@@ -37,16 +50,15 @@ export function useNotifications() {
       setPermission(result);
       
       if (result === 'granted') {
-        updateSettings({ ...settings, notificationsEnabled: true });
-        await subscribeUserToPush();
+        if (serviceWorkerRegistration) {
+          await subscribeUserToPush(serviceWorkerRegistration);
+        }
         return true;
       } else {
-        toast({
-          title: 'Notifications refusées',
-          description: 'Vous ne recevrez pas de notifications push.',
-          variant: 'destructive',
+        toast("Notifications refusées", {
+          description: "Vous ne recevrez pas de notifications push.",
+          position: "top-center",
         });
-        updateSettings({ ...settings, notificationsEnabled: false });
         return false;
       }
     } catch (error) {
@@ -56,10 +68,8 @@ export function useNotifications() {
   };
 
   // S'abonner aux notifications push
-  const subscribeUserToPush = async (): Promise<boolean> => {
+  const subscribeUserToPush = async (registration: ServiceWorkerRegistration): Promise<boolean> => {
     try {
-      const registration = await navigator.serviceWorker.ready;
-      
       // Vérifier si l'utilisateur est déjà abonné
       const existingSubscription = await registration.pushManager.getSubscription();
       
@@ -89,13 +99,13 @@ export function useNotifications() {
   // Se désabonner des notifications push
   const unsubscribeFromPush = async (): Promise<boolean> => {
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
+      if (!serviceWorkerRegistration) return false;
+      
+      const subscription = await serviceWorkerRegistration.pushManager.getSubscription();
       
       if (subscription) {
         await subscription.unsubscribe();
         setSubscription(null);
-        updateSettings({ ...settings, notificationsEnabled: false });
         
         // Ici, vous informeriez votre serveur de la désinscription
         console.log('Désinscription des notifications push réussie');
@@ -113,10 +123,8 @@ export function useNotifications() {
   // Fonction pour envoyer une notification test locale
   const sendTestNotification = () => {
     if (permission !== 'granted') {
-      toast({
-        title: 'Permission requise',
-        description: 'Vous devez d\'abord autoriser les notifications.',
-        variant: 'destructive',
+      toast("Permission requise", {
+        description: "Vous devez d'abord autoriser les notifications.",
       });
       return;
     }
@@ -125,11 +133,31 @@ export function useNotifications() {
       body: 'Ceci est une notification de test de DataWave Sensor.',
       icon: '/icons/icon-192x192.png',
       badge: '/icons/badge-72x72.png',
+      vibrate: [100, 50, 100],
+      data: {
+        dateOfArrival: Date.now(),
+        primaryKey: 1
+      },
+      actions: [
+        {
+          action: 'explore',
+          title: 'Ouvrir l\'application',
+        },
+        {
+          action: 'close',
+          title: 'Fermer',
+        },
+      ]
     };
 
-    navigator.serviceWorker.ready.then(registration => {
-      registration.showNotification('Test de Notification', options);
-    });
+    if (navigator.serviceWorker && serviceWorkerRegistration) {
+      serviceWorkerRegistration.showNotification('Test de Notification', options);
+    } else {
+      // Fallback pour les navigateurs qui ne supportent pas les service workers
+      new Notification('Test de Notification', { 
+        body: 'Ceci est une notification de test de DataWave Sensor.'
+      });
+    }
   };
 
   // Utilitaire pour convertir la clé VAPID au format approprié
