@@ -6,6 +6,7 @@ import TemperatureDisplay from "@/components/sensors/TemperatureDisplay";
 import TurbidityDisplay from "@/components/sensors/TurbidityDisplay";
 import LampStatus from "@/components/sensors/LampStatus";
 import TimeDisplay from "@/components/sensors/TimeDisplay";
+import FishMealInfo from "@/components/sensors/FishMealInfo";
 import DeviceConnection from "@/components/devices/DeviceConnection";
 import { useDeviceConnection } from "@/hooks/useDeviceConnection";
 import { ConnectionStatus } from "@/types/sensorTypes";
@@ -80,7 +81,7 @@ const Index = () => {
           </section>
 
           {isConnected ? (
-            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
               <TemperatureDisplay 
                 temperature={sensorData.temperature} 
                 animationDelay="animation-delay-100"
@@ -97,6 +98,9 @@ const Index = () => {
               />
               <TimeDisplay 
                 animationDelay="animation-delay-400"
+              />
+              <FishMealInfo
+                animationDelay="animation-delay-500"
               />
             </section>
           ) : (
